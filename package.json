@@ -1,7 +1,7 @@
 {
   "name": "homebridge",
   "description": "HomeKit support for the impatient - for dynamic platforms only",
-  "version": "0.1.2",
+  "version": "0.1.2.1",
   "scripts": {
     "start": "DEBUG=* node app.js || true"
   },
@@ -15,7 +15,6 @@
     "hap-nodejs": "git+https://github.com/KhaosT/HAP-NodeJS#6bf0f9eaaa2d87db8d1768114c61f4acbb095c41",
     "mdns": "^2.2.4",
     "node-persist": "0.0.x",
-    "npm": "latest",
     "npmi": "1.0.1",
     "request": "2.49.x",
     "xml2js": "0.4.x",
