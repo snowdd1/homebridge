@@ -53,6 +53,7 @@ var bridge = new Bridge(bridgeConfig.name || 'Homebridge', uuid.generate("HomeBr
 // keep track of async calls we're waiting for callbacks on before we can start up
 // this is hacky but this is all going away once we build proper plugin support
 var asyncCalls = 0;
+var asyncInstalls = 0;
 var asyncWait = false;
 
 function startup() {
@@ -62,7 +63,7 @@ function startup() {
     asyncWait = false;
     
     // publish now unless we're waiting on anyone
-    if (asyncCalls == 0)
+    if (asyncCalls == 0 && asyncInstalls == 0)
       publish();
 }
 
@@ -96,12 +97,12 @@ function loadAccessories() {
 
 function loadPlatforms() {
 
-    console.log("Loading " + config.platforms.length + " platforms...");
+    console.log("Loading " + config.platforms.length + " platforms (dynamically installed)...");
 
     for (var i=0; i<config.platforms.length; i++) {
 
         var platformConfig = config.platforms[i];
-
+        asyncInstalls += 1;
         // Load up the class for this accessory
         var platformType = platformConfig["platform"]; // like "Wink"
         var platformName = platformConfig["name"];
@@ -148,6 +149,7 @@ function loadPlatforms() {
             log("Initializing %s platform...", platformType);
 
             var platformInstance = new platformConstructor(log, platformConfig);
+            asyncInstalls -= 1; // installer done
             loadPlatformAccessories(platformInstance, log);
         });
     } // end for
@@ -172,7 +174,7 @@ function loadPlatformAccessories(platformInstance, log) {
       }
       
       // were we the last callback?
-      if (asyncCalls === 0 && !asyncWait)
+      if (asyncCalls === 0 && !asyncWait && asyncInstalls === 0)  // there must also be no pending installations that could return accessories!
         publish();
   }));
 }
@@ -237,6 +239,7 @@ function createLog(name) {
 }
 
 function publish() {
+  console.log("app.js:publish");
   bridge.publish({
     username: bridgeConfig.username || "CC:22:3D:E3:CE:30",
     port: bridgeConfig.port || 51826,
