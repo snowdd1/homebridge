@@ -9,6 +9,7 @@ var Service = require('HAP-NodeJS').Service;
 var Characteristic = require('HAP-NodeJS').Characteristic;
 var accessoryLoader = require('HAP-NodeJS').AccessoryLoader;
 var once = require('HAP-NodeJS/lib/util/once').once;
+var npm = require('npm');
 
 console.log("Starting HomeBridge server...");
 
@@ -135,9 +136,7 @@ function loadPlatforms() {
             }
             // installed
             console.log(options.name+'@'+options.version+' installed successfully in '+path.resolve(options.path));
-            
-            // within from the callback function initialize the platform just loaded
-            
+            // is installed, but the dependencies might still be missing
             //var platformModule = require('./platforms/' + platformType + ".js"); // like "./platforms/Wink.js"
             var platformModule = require(platformType);
             // why is this done in two steps?
@@ -150,9 +149,7 @@ function loadPlatforms() {
 
             var platformInstance = new platformConstructor(log, platformConfig);
             loadPlatformAccessories(platformInstance, log);
-            
         });
-
     } // end for
 }
 
