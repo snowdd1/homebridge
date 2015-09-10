@@ -57,7 +57,7 @@ var asyncWait = false;
 function startup() {
     asyncWait = true;
     if (config.platforms) loadPlatforms();
-    if (config.accessories) loadAccessories();
+    if (config.accessories) loadAccessories();  // this doesn't work any more
     asyncWait = false;
     
     // publish now unless we're waiting on anyone
@@ -96,7 +96,7 @@ function loadAccessories() {
 function loadPlatforms() {
 
     console.log("Loading " + config.platforms.length + " platforms...");
-    
+
     for (var i=0; i<config.platforms.length; i++) {
 
         var platformConfig = config.platforms[i];
@@ -104,17 +104,56 @@ function loadPlatforms() {
         // Load up the class for this accessory
         var platformType = platformConfig["platform"]; // like "Wink"
         var platformName = platformConfig["name"];
-        var platformModule = require('./platforms/' + platformType + ".js"); // like "./platforms/Wink.js"
-        var platformConstructor = platformModule.platform; // like "WinkPlatform", a JavaScript constructor
+        // and here we need to install the platform dependencies
+        // proudly copied the example from the npmi readme github.com/maxleiko/npmi
+        var npmi = require('npmi');
+        var path = require('path');
 
-        // Create a custom logging function that prepends the platform name for debugging
-        var log = createLog(platformName);
+        console.log(npmi.NPM_VERSION); // prints the installed npm version used by npmi
 
-        log("Initializing %s platform...", platformType);
 
-        var platformInstance = new platformConstructor(log, platformConfig);
-        loadPlatformAccessories(platformInstance, log);
-    }
+        var options = {
+            name: platformType,    // your module name
+            //version: '0.0.1',       // expected version [default: 'latest']
+            path: '.',              // installation path [default: '.']
+            forceInstall: false,    // force install if set to true (even if already installed, it will do a reinstall) [default: false]
+            npmLoad: {              // npm.load(options, callback): this is the "options" given to npm.load()
+                loglevel: 'info'  // [default: {loglevel: 'silent'}]
+            }
+        };
+
+        
+        npmi(options, function (err, result) {
+            if (err) {
+                if      (err.code === npmi.LOAD_ERR)  {
+                	console.log('npm load error');
+                }  else if (err.code === npmi.INSTALL_ERR) {
+                	console.log('npm install error');
+                }
+                //return console.log(err.message);  // let it fail and show!!!! 
+                throw new Error("npmi failed to install " + options.name);
+            }
+            // installed
+            console.log(options.name+'@'+options.version+' installed successfully in '+path.resolve(options.path));
+            
+            // within from the callback function initialize the platform just loaded
+            
+            //var platformModule = require('./platforms/' + platformType + ".js"); // like "./platforms/Wink.js"
+            var platformModule = require(platformType);
+            // why is this done in two steps?
+            var platformConstructor = platformModule.platform; // like "WinkPlatform", a JavaScript constructor
+
+            // Create a custom logging function that prepends the platform name for debugging
+            var log = createLog(platformName);
+
+            log("Initializing %s platform...", platformType);
+
+            var platformInstance = new platformConstructor(log, platformConfig);
+            loadPlatformAccessories(platformInstance, log);
+            
+        });
+
+    } // end for
 }
 
 function loadPlatformAccessories(platformInstance, log) {
