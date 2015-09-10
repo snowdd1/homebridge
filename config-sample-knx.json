@@ -9,7 +9,7 @@
     "hint": "Always paste into jsonlint.com validation page before starting your homebridge, saves a lot of frustration",
     "platforms": [
         {
-            "platform": "KNX",
+            "platform": "homebridge-knx",
             "name": "KNX",
             "knxd_ip": "192.168.178.205",
             "knxd_port": 6720,
