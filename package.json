@@ -18,7 +18,6 @@
     "npmi": "1.0.1",
     "request": "2.49.x",
     "xml2js": "0.4.x",
-    "xmldoc": "0.1.x",
-    "homebridge-knx": "latest"
+    "xmldoc": "0.1.x"
   }
 }
