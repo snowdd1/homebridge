@@ -3,8 +3,8 @@
  */
 'use strict';
 var types = require("HAP-NodeJS/accessories/types.js");
-//var hardware = require('myHardwareSupport'); //require any additional hardware packages
 var knxd = require('eibd');
+var Hapi = require('hapi');
 
 function KNXPlatform(log, config){
 	this.log = log;
@@ -15,7 +15,7 @@ function KNXPlatform(log, config){
 
 	// initiate connection to bus for listening ==> done with first shim
 
-};
+}
 
 KNXPlatform.prototype = {
 		accessories: function(callback) {
@@ -46,13 +46,15 @@ KNXPlatform.prototype = {
 					var acc = new accConstructor.accessory(this.log,foundAccessories[int]);
 					this.log("created "+acc.name+" universal accessory");	
 					myAccessories.push(acc);
+					console.log ("pushed constructor name"+ acc.constructor.name);
+					console.log ("-------------------------");
 					break;
 				default:
 					// do something else
-					this.log("unkown accessory type found")
+					this.log("unkown accessory type found");
 				} 
 
-			};	
+			}	
 			// if done, return the array to callback function
 			this.log("returning "+myAccessories.length+" accessories");
 			callback(myAccessories);
@@ -118,7 +120,7 @@ function groupsocketlisten(opts, callback) {
 
 var registerSingleGA = function registerSingleGA (groupAddress, callback, reverse) {
 	subscriptions.push({address: groupAddress, callback: callback, reverse:reverse });
-}
+};
 
 /*
  * public busMonitor.startMonitor()
@@ -142,7 +144,8 @@ var startMonitor = function startMonitor(opts) {  // using { host: name-ip, port
 				// iterate through all registered addresses
 				if (subscriptions[i].address === dest) {
 					// found one, notify
-					console.log('HIT: Write from '+src+' to '+dest+': '+val+' ['+type+']');
+					//console.log('HIT: Write from '+src+' to '+dest+': '+val+' ['+type+']');
+					subscriptions[i].lastValue = {val, src, dest, type, date:Date()};
 					subscriptions[i].callback(val, src, dest, type, subscriptions[i].reverse);
 				}
 			}
@@ -156,6 +159,7 @@ var startMonitor = function startMonitor(opts) {  // using { host: name-ip, port
 				if (subscriptions[i].address === dest) {
 					// found one, notify
 //					console.log('HIT: Response from '+src+' to '+dest+': '+val+' ['+type+']');
+					subscriptions[i].lastValue = {val, src, dest, type, date:Date()};
 					subscriptions[i].callback(val, src, dest, type, subscriptions[i].reverse);
 				}
 			}
@@ -167,6 +171,61 @@ var startMonitor = function startMonitor(opts) {  // using { host: name-ip, port
 //		console.log('Read from '+src+' to '+dest);
 //		});
 		//console.log("knxfunctions.read: in callback parser at end");
+		
+		
+		// check if a tiny web server could show current status
+		
+
+
+		// Create a server with a host and port
+		var server = new Hapi.Server();
+		server.connection({ port: 3000 });
+
+		server.route({
+		    method: 'GET',
+		    path: '/',
+		    handler: function (request, reply) {
+		    	var answer = "<html><title>Subscriptions</title><body>";
+		    	var name, nextlevelname;
+		    	answer += "<TABLE>";
+		    	for (var i = 0; i < subscriptions.length; i++) {
+		    		answer += "<TR>";
+		    		for (name in  subscriptions[i]) {
+		    		    if (typeof subscriptions[i][name] !== 'function') {
+		    		    	if (typeof subscriptions[i][name] !== 'object' ) {
+		    		    		answer += ("<TD>" + name + ': ' + subscriptions[i][name] +"</TD>"); 
+		    		    	} else {
+		    		    		for (nextlevelname in  subscriptions[i][name]) {
+		    		    		    if (typeof subscriptions[i][name][nextlevelname] !== 'function') {
+		    		    		    	if (typeof subscriptions[i][name][nextlevelname] !== 'object' ) {
+		    		    		    		answer += ("<TD>" + nextlevelname + ': ' + subscriptions[i][name][nextlevelname]) + "</TD> ";
+		    		    		    	} 
+		    		    		    } 
+		    		    		}
+		    		    	}
+		    		    } 
+		    		}
+		    		answer += "</TR>";
+		    	}
+		        reply(answer + "</body></html>");
+		    }
+		});
+
+		server.route({
+		    method: 'GET',
+		    path: '/{name}',
+		    handler: function (request, reply) {
+		        reply('Hello, ' + encodeURIComponent(request.params.name) + '!');
+		    }
+		});
+
+		server.start(function () {
+		    console.log('Server running at:', server.info.uri);
+		});
+		
+		
+		
+		
 	}); // groupsocketlisten parser
 }; //startMonitor
 
