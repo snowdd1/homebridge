@@ -117,6 +117,17 @@ function loadPlatforms() {
     }
 }
 
+function latePush(bridge, accessory, delay) {
+    setTimeout(function() {
+  	  bridge.addBridgedAccessory(accessory);
+  	  console.log("########### Pushing in a new one: #" + bridge._advertiser.accessoryInfo.configVersion);
+  	  bridge._advertiser.stopAdvertising();
+  	  bridge._advertiser.accessoryInfo.configVersion++;
+  	  bridge._advertiser.accessoryInfo.save();
+  	  bridge._advertiser.startAdvertising();
+    }, delay);
+}
+
 function loadPlatformAccessories(platformInstance, log) {
   asyncCalls++;
   platformInstance.accessories(once(function(foundAccessories){
@@ -132,7 +143,13 @@ function loadPlatformAccessories(platformInstance, log) {
           var accessory = createAccessory(accessoryInstance, accessoryName);
 
           // add it to the bridge
-          bridge.addBridgedAccessory(accessory);
+          /***
+           * Breaking test: Does it stay alive if the accessories are pushed into the bridge after publish() ?
+           */
+          latePush(bridge, accessory, 1000*60*i);
+          /***
+           *  END TEST
+           */
       }
       
       // were we the last callback?
