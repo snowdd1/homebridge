@@ -59,7 +59,7 @@ var iterate = function nextIteration(myObject, path){
 	// when finding objects it goes one level  deeper
 	var name;
 	if (!path){ 
-		console.log("---iterating--------------------")
+		console.log("---iterating--------------------");
 	}
 	for (name in myObject) {
 		if (typeof myObject[name] !== 'function') {
@@ -77,6 +77,60 @@ var iterate = function nextIteration(myObject, path){
 	}
 };
 
+
+// function to avoid out of bounds for fixed-value characteristics
+// for float types this is already managed by hap-nodeJS itself
+// returns a value that can be safely used in 
+var safeSet = function(char, value) {
+	console.log("DEBUG: entered safeSet");
+	//iterate(char);
+	if (char.props.format==="uint8") {
+		console.log("DEBUG: format ok");
+		// fixed-value formats use unsigned integer AFAIK
+		if (!char.hasOwnProperty("validValues")) {
+			console.log("DEBUG: establishing safe values");
+			// we need to find those first
+			// TODO: find the prototype
+			var displayName = char.displayName;
+			if (Characteristic.hasOwnProperty(displayName.replace(/ /g,''))) {
+				var chartype = displayName.replace(/ /g,'');
+				console.log("DEBUG: chartype " + chartype);
+				for (var name in Characteristic[chartype]) {
+					console.log("DEBUG: chartype.name " + name);
+					if (Characteristic[chartype].hasOwnProperty(name)){
+						console.log("DEBUG: typeof chartype.name " + typeof Characteristic[chartype][name]);
+						if (typeof Characteristic[chartype][name] === 'number' ) {
+							// add it to the array
+							if (char.hasOwnProperty("validValues")){
+								char.validValues = char.validValues.concat(Characteristic[chartype][name]);
+								console.log("DEBUG: following: length " + char.validValues.length);
+							} else {
+								char.validValues = [Characteristic[chartype][name]];
+								console.log("DEBUG: 1st: length " + char.validValues.length);
+							}
+						}
+					}
+				}
+			}
+			console.log("DEBUG: " + char.displayName + " has now validValue of "+ char.validValues );
+		}
+		// TODO: compare value to allowed values
+		if (char.hasOwnProperty("validValues")) {
+			//do the check
+			if (char.validValues.indexOf(value)<0) { 
+				// didn't find
+				console.log("DEBUG: " + char.displayName + " has validValue of "+ char.validValues );
+				console.log("DEBUG: " + char.displayName + " ERROR illegal value "+ value );
+				value =  char.validValues[0]; // default to first one
+				console.log("DEBUG: " + char.displayName + " ERROR returned instead "+ value );
+			}
+		}
+		
+	} else {
+		console.log("DEBUG: " + char.props.format + "!== uint8");
+	}
+	return value;
+};
 
 module.exports = {
 		accessory: KNXDevice
@@ -228,9 +282,10 @@ KNXDevice.prototype = {
 			knxd_registerGA(addresses, function(val, src, dest, type, reverse){
 				this.log("["+ this.name +"]:[" + characteristic.displayName+ "]: Received value from bus:"+val+ " for " +dest+ " from "+src+" of type "+type+ " for " + characteristic.displayName);
 				if (val>=(characteristic.props.minValue || 0) && val<=(characteristic.props.maxValue || 255)) {
-					characteristic.setValue(reverse ? (255-val):val, undefined, 'fromKNXBus'); 
+					// use the safe setter
+					characteristic.setValue(safeSet(characteristic, reverse ? (255-val):val), undefined, 'fromKNXBus'); 
 				} else {
-					this.log("["+ this.name +"]:[" + characteristic.displayName+ "]: Value %s out of bounds %s...%s ",hk_value, (characteristic.props.minValue || 0), (characteristic.props.maxValue || 255));
+					this.log("["+ this.name +"]:[" + characteristic.displayName+ "]: Value %s out of bounds %s...%s ",val, (characteristic.props.minValue || 0), (characteristic.props.maxValue || 255));
 				}
 			}.bind(this));
 		},
@@ -379,7 +434,7 @@ KNXDevice.prototype = {
 					callback();
 				}
 			} else {
-				var numericValue = 0;
+				var KNXvalue = 0;
 				switch (value){
 				case 0: 
 					KNXvalue = 4;
@@ -940,7 +995,7 @@ KNXDevice.prototype = {
 			} 
 			if (config.PositionState) {
 				this.log("["+ this.name +"]:WindowCovering PositionState characteristic enabled");
-				this.bindCharacteristic(myService, Characteristic.PositionState, "Float", config.PositionState);
+				this.bindCharacteristic(myService, Characteristic.PositionState, "Int", config.PositionState);
 			} 
 			return myService;
 		},		

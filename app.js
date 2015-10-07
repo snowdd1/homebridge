@@ -118,14 +118,14 @@ function loadPlatforms() {
 }
 
 function latePush(bridge, accessory, delay) {
-    setTimeout(function() {
-  	  bridge.addBridgedAccessory(accessory);
-  	  console.log("########### Pushing in a new one: #" + bridge._advertiser.accessoryInfo.configVersion);
-  	  bridge._advertiser.stopAdvertising();
-  	  bridge._advertiser.accessoryInfo.configVersion++;
-  	  bridge._advertiser.accessoryInfo.save();
-  	  bridge._advertiser.startAdvertising();
-    }, delay);
+	setTimeout(function() {
+		bridge._advertiser.stopAdvertising();
+		bridge.addBridgedAccessory(accessory);
+		console.log("########### Pushing in a new one: #" + bridge._advertiser.accessoryInfo.configVersion);
+		bridge._advertiser.accessoryInfo.configVersion++;
+		bridge._advertiser.accessoryInfo.save();
+		bridge._advertiser.startAdvertising();
+	}, delay);
 }
 
 function loadPlatformAccessories(platformInstance, log) {
