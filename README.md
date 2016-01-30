@@ -1,29 +1,21 @@
 
 [![Slack Status](https://homebridge-slackin.herokuapp.com/badge.svg)](https://homebridge-slackin.herokuapp.com)
 
-# IMPORTANT
-
-Homebridge has recently spun off its included accessories into a new module [homebridge-legacy-plugins](https://github.com/nfarina/homebridge-legacy-plugins) which contains our previous integrations for popular devices like Nest, WeMo, Sonos, Hue, and many more. Please do not open any issues related to specific devices in this repository; go there instead.
-
-If you were using Homebridge previously and just want to get back up and running as quickly as possible, you can install the `homebridge-legacy-plugins` plugin which contains integrations for popular devices like Nest, WeMo, Sonos, Hue, and many more. After installing Homebridge (see "Installation" below), simply install the legacy plugins module:
-
-    npm install -g homebridge-legacy-plugins
-
-You should first explore all available plugins at the NPM website by [searching for the keyword `homebridge-plugin`](https://www.npmjs.com/browse/keyword/homebridge-plugin) to see if a newer version of your accessory is available before using the one in Legacy Plugins (which may be deleted).
-
 # Homebridge
+
+![](https://media.giphy.com/media/10l79ICohTu4iQ/giphy.gif)
 
 Homebridge is a lightweight NodeJS server you can run on your home network that emulates the iOS HomeKit API. It supports Plugins, which are community-contributed modules that provide a basic bridge from HomeKit to various 3rd-party APIs provided by manufacturers of "smart home" devices. 
 
 Since Siri supports devices added through HomeKit, this means that with Homebridge you can ask Siri to control devices that don't have any support for HomeKit at all. For instance, using just some of the available plugins, you can say:
 
- * _Siri, unlock the front door._
+ * _Siri, unlock the back door._ [pictured above]
  * _Siri, open the garage door._
  * _Siri, turn on the coffee maker._ 
  * _Siri, turn on the living room lights._
  * _Siri, good morning!_
 
-You can explore all available plugins at the NPM website by [searching for the keyword `homebridge-plugin`](https://www.npmjs.com/browse/keyword/homebridge-plugin).
+You can explore all available plugins at the NPM website by [searching for the keyword `homebridge-plugin`](https://www.npmjs.com/search?q=homebridge-plugin).
 
 # Community
 
@@ -37,23 +29,25 @@ You can also chat with us in our nascent [Slack instance](http://homebridge-slac
 
 Homebridge is published through [NPM](https://www.npmjs.com/package/homebridge) and should be installed "globally" by typing:
 
-    npm install -g homebridge
+    sudo npm install -g homebridge
 
-You may have to execute commands with `sudo` depending on your system. Now you should be able to run Homebridge:
+Now you should be able to run Homebridge:
 
-    $ `homebridge`
+    $ homebridge
     No plugins found. See the README for information on installing plugins.
 
 Homebridge will complain if you don't have any Plugins installed, since it will essentially be useless, although you can still "pair" with it. See the next section "Installing Plugins" for more info.
 
 Once you've installed a Plugin or two, you can run Homebridge again:
 
-    $ `homebridge`
+    $ homebridge
     Couldn't find a config.json file [snip]
 
 However, Homebridge won't do anything until you've created a `config.json` file containing your accessories and/or platforms. You can start by copying and modifying the included `config-sample.json` file which includes declarations for some example accessories and platforms. Each Plugin will have its own expected configuration; the documentation for Plugins should give you some real-world examples for that plugin.
 
 **NOTE**: Your `config.json` file MUST live in your home directory inside `.homebridge`. The full error message will contain the exact path where your config is expected to be found.
+
+**REALLY IMPORTANT**: You must use a "plain text" editor to create or modify `config.json`. Do NOT use apps like TextEdit on Mac or Wordpad on Windows; these apps will corrupt the formatting of the file in hard-to-debug ways. I suggest using the free [Atom text editor](http://atom.io).
 
 Once you've added your config file, you should be able to run Homebridge again:
 
@@ -77,9 +71,9 @@ Plugins can publish Accessories and/or Platforms. Accessories are individual dev
 
 You install Plugins the same way you installed Homebridge - as a global NPM module. For example:
 
-    npm install -g homebridge-lockitron
+    sudo npm install -g homebridge-lockitron
 
-You can explore all available plugins at the NPM website by [searching for the keyword `homebridge-plugin`](https://www.npmjs.com/browse/keyword/homebridge-plugin).
+You can explore all available plugins at the NPM website by [searching for the keyword `homebridge-plugin`](https://www.npmjs.com/search?q=homebridge-plugin).
 
 **IMPORTANT**: Many of the plugins that Homebridge used to include with its default installation have been moved to the single plugin [homebridge-legacy-plugins](https://www.npmjs.com/package/homebridge-legacy-plugins).
 
@@ -111,6 +105,8 @@ The best place to start is the included [Example Plugins](https://github.com/nfa
 
 For more example on how to construct HomeKit Services and Characteristics, see the many Accessories in the [Legacy Plugins](https://github.com/nfarina/homebridge-legacy-plugins/tree/master/accessories) repository.
 
+You can also view the [full list of supported HomeKit Services and Characteristics in the HAP-NodeJS protocol repository](https://github.com/KhaosT/HAP-NodeJS/blob/master/lib/gen/HomeKitTypes.js).
+
 There isn't currently an example for how to publish a Platform (which allows the user to bridge many discovered devices at once, like a house full of smart lightbulbs), but the process is almost identical to registering an Accessory. Simply modify the example `index.js` in [homebridge-lockitron](https://github.com/nfarina/homebridge/tree/master/example-plugins/homebridge-lockitron) to say something like:
 
     homebridge.registerPlatform("homebridge-myplugin", "MyPlatform", MyPlatform);
@@ -126,6 +122,19 @@ Two reasons why Homebridge may not be discoverable:
   1. Homebridge server thinks it's been paired with, but iOS thinks otherwise. Fix: deleted `persist/` directory which is next to your `config.json`.
 
   2. iOS device has gotten your Homebridge `username` (looks like a MAC address) "stuck" somehow, where it's in the database but inactive. Fix: change your `username` in the "bridge" section of `config.json` to be some new value.
+
+### Errors on startup
+
+The following errors are experienced when starting Homebridge and can be safely ignored. The cost of removing the issue at the core of the errors isn't worth the effort.
+
+```
+*** WARNING *** The program 'nodejs' uses the Apple Bonjour compatibility layer of Avahi
+*** WARNING *** Please fix your application to use the native API of Avahi!
+*** WARNING *** For more information see http://0pointerde/avahi-compat?s=libdns_sd&e=nodejs
+*** WARNING *** The program 'nodejs' called 'DNSServiceRegister()' which is not supported (or only supported partially) in the Apple Bonjour compatibility layer of Avahi
+*** WARNING *** Please fix your application to use the native API of Avahi!
+*** WARNING *** For more information see http://0pointerde/avahi-compat?s=libdns_sd&e=nodejs&f=DNSServiceRegister
+```
 
 # Why Homebridge?
 
