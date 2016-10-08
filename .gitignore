@@ -10,4 +10,7 @@ npm-debug.log
 # Ignore any extra plugins in the example directory that aren't in Git already
 # (this is a sandbox for the user)
 example-plugins
+<<<<<<< HEAD
 .project
+=======
+>>>>>>> refs/remotes/nfarina/master
